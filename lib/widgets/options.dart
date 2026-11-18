@@ -136,18 +136,25 @@ class Segments<T> extends StatelessWidget {
                                   icon!(v, v == value),
                                   const SizedBox(width: 8),
                                 ],
-                                AnimatedDefaultTextStyle(
-                                  duration: Motion.short,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .labelMedium!
-                                      .copyWith(
-                                        color: v == value ? p.ink : p.muted,
-                                        fontWeight: v == value
-                                            ? FontWeight.w700
-                                            : FontWeight.w500,
-                                      ),
-                                  child: Text(label(v), maxLines: 1),
+                                // Shrinks rather than overflow at large text
+                                // sizes or with a long label.
+                                Flexible(
+                                  child: FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: AnimatedDefaultTextStyle(
+                                      duration: Motion.short,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelMedium!
+                                          .copyWith(
+                                            color: v == value ? p.ink : p.muted,
+                                            fontWeight: v == value
+                                                ? FontWeight.w700
+                                                : FontWeight.w500,
+                                          ),
+                                      child: Text(label(v), maxLines: 1),
+                                    ),
+                                  ),
                                 ),
                               ],
                             ),
