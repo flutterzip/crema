@@ -8,7 +8,13 @@ import '../config/palette.dart';
 import 'fly_to_bag.dart';
 
 class TabItem {
-  const TabItem(this.label, this.icon, this.activeIcon, {this.badge = 0, this.isBag = false});
+  const TabItem(
+    this.label,
+    this.icon,
+    this.activeIcon, {
+    this.badge = 0,
+    this.isBag = false,
+  });
 
   final String label;
   final IconData icon, activeIcon;
@@ -21,7 +27,12 @@ class TabItem {
 /// A floating frosted bar. A pill of accent slides under the current tab,
 /// stretching as it travels.
 class GlassTabBar extends StatelessWidget {
-  const GlassTabBar({super.key, required this.items, required this.index, required this.onTap});
+  const GlassTabBar({
+    super.key,
+    required this.items,
+    required this.index,
+    required this.onTap,
+  });
 
   final List<TabItem> items;
   final int index;
@@ -31,7 +42,12 @@ class GlassTabBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = context.palette;
     return Padding(
-      padding: EdgeInsets.fromLTRB(28, 0, 28, MediaQuery.paddingOf(context).bottom + 10),
+      padding: EdgeInsets.fromLTRB(
+        28,
+        0,
+        28,
+        MediaQuery.paddingOf(context).bottom + 10,
+      ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(32),
         child: BackdropFilter(
@@ -44,37 +60,49 @@ class GlassTabBar extends StatelessWidget {
               border: Border.all(color: p.line),
             ),
             padding: const EdgeInsets.all(7),
-            child: LayoutBuilder(builder: (context, box) {
-              final w = box.maxWidth / items.length;
-              return Stack(
-                children: [
-                  TweenAnimationBuilder<double>(
-                    tween: Tween(end: index.toDouble()),
-                    duration: Motion.medium,
-                    curve: Motion.spring,
-                    builder: (_, v, _) {
-                      // Stretch while moving, by how far from a whole tab it is.
-                      final stretch = 1 - ((v - v.round()).abs() * 2 - 1).abs();
-                      return Positioned(
-                        left: v * w - stretch * 8,
-                        width: w + stretch * 16,
-                        top: 0,
-                        bottom: 0,
-                        child: Container(
-                          decoration: BoxDecoration(color: p.accent, borderRadius: BorderRadius.circular(26)),
-                        ),
-                      );
-                    },
-                  ),
-                  Row(
-                    children: [
-                      for (var i = 0; i < items.length; i++)
-                        Expanded(child: _Tab(item: items[i], active: i == index, onTap: () => onTap(i))),
-                    ],
-                  ),
-                ],
-              );
-            }),
+            child: LayoutBuilder(
+              builder: (context, box) {
+                final w = box.maxWidth / items.length;
+                return Stack(
+                  children: [
+                    TweenAnimationBuilder<double>(
+                      tween: Tween(end: index.toDouble()),
+                      duration: Motion.medium,
+                      curve: Motion.spring,
+                      builder: (_, v, _) {
+                        // Stretch while moving, by how far from a whole tab it is.
+                        final stretch =
+                            1 - ((v - v.round()).abs() * 2 - 1).abs();
+                        return Positioned(
+                          left: v * w - stretch * 8,
+                          width: w + stretch * 16,
+                          top: 0,
+                          bottom: 0,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: p.accent,
+                              borderRadius: BorderRadius.circular(26),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    Row(
+                      children: [
+                        for (var i = 0; i < items.length; i++)
+                          Expanded(
+                            child: _Tab(
+                              item: items[i],
+                              active: i == index,
+                              onTap: () => onTap(i),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                );
+              },
+            ),
           ),
         ),
       ),
@@ -93,8 +121,14 @@ class _Tab extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = context.palette;
     final color = active ? p.onAccent : p.inkSoft;
-    Widget icon = Icon(active ? item.activeIcon : item.icon, color: color, size: 23);
-    if (item.isBag) icon = BagBump(child: KeyedSubtree(key: bagTarget, child: icon));
+    Widget icon = Icon(
+      active ? item.activeIcon : item.icon,
+      color: color,
+      size: 23,
+    );
+    if (item.isBag) {
+      icon = BagBump(child: KeyedSubtree(key: bagTarget, child: icon));
+    }
     return Semantics(
       button: true,
       selected: active,
@@ -122,7 +156,8 @@ class _Tab extends StatelessWidget {
                       tween: Tween(begin: 0.4, end: 1),
                       duration: Motion.medium,
                       curve: Motion.spring,
-                      builder: (_, s, child) => Transform.scale(scale: s, child: child),
+                      builder: (_, s, child) =>
+                          Transform.scale(scale: s, child: child),
                       child: Container(
                         constraints: const BoxConstraints(minWidth: 18),
                         height: 18,
@@ -147,19 +182,26 @@ class _Tab extends StatelessWidget {
                   ),
               ],
             ),
-            AnimatedSize(
-              duration: Motion.medium,
-              curve: Motion.settle,
-              child: active
-                  ? Padding(
-                      padding: const EdgeInsets.only(left: 8),
-                      child: Text(
-                        item.label,
-                        maxLines: 1,
-                        style: Theme.of(context).textTheme.labelMedium!.copyWith(color: color, fontWeight: FontWeight.w700),
-                      ),
-                    )
-                  : const SizedBox.shrink(),
+            Flexible(
+              child: AnimatedSize(
+                duration: Motion.medium,
+                curve: Motion.settle,
+                child: active
+                    ? Padding(
+                        padding: const EdgeInsets.only(left: 8),
+                        child: Text(
+                          item.label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.labelMedium!
+                              .copyWith(
+                                color: color,
+                                fontWeight: FontWeight.w700,
+                              ),
+                        ),
+                      )
+                    : const SizedBox.shrink(),
+              ),
             ),
           ],
         ),
