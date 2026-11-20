@@ -60,10 +60,20 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen> {
               ],
             ),
             StampCard(stamps: card.stamps, seen: seen),
-            if (redeemed)
-              const FreeDrinkTicket(code: 'CREMA 4821')
-            else if (card.rewards > 0)
-              CremaButton(label: 'Redeem a free drink', icon: Icons.redeem_rounded, busy: redeeming, onPressed: redeem),
+            // Redeeming breaks the button apart and the pieces fly together
+            // as the ticket.
+            if (redeemed || card.rewards > 0)
+              ParticleMorph(
+                child: redeemed
+                    ? FreeDrinkTicket(key: const ValueKey('ticket'), code: 'CREMA 4821', rise: !Motion.loops(context))
+                    : CremaButton(
+                        key: const ValueKey('redeem'),
+                        label: 'Redeem a free drink',
+                        icon: Icons.redeem_rounded,
+                        busy: redeeming,
+                        onPressed: redeem,
+                      ),
+              ),
             const SectionTitle('Your orders'),
             if (orders.isEmpty)
               Text('Your orders will show up here, ready to have again.', style: text.bodyMedium)

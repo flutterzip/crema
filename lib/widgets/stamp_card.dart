@@ -185,16 +185,20 @@ class _Slot extends StatelessWidget {
 
 /// What to show at the bar once a free drink is redeemed.
 class FreeDrinkTicket extends StatelessWidget {
-  const FreeDrinkTicket({super.key, required this.code});
+  const FreeDrinkTicket({super.key, required this.code, this.rise = true});
 
   final String code;
+
+  /// Springs in on its own. Off when something else brings it in (the
+  /// particles need it whole from the first frame).
+  final bool rise;
 
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
     final text = Theme.of(context).textTheme;
     return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0, end: 1),
+      tween: Tween(begin: rise ? 0 : 1, end: 1),
       duration: Motion.long,
       curve: Motion.spring,
       builder: (_, t, child) => Transform.scale(scale: 0.8 + t * 0.2, child: Opacity(opacity: t.clamp(0.0, 1.0), child: child)),

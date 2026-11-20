@@ -1,10 +1,10 @@
 import 'package:crema/app.dart';
-import 'package:crema/config/motion.dart';
-import 'package:crema/config/timing.dart';
+import 'package:crema/screens/drink/drink_screen.dart';
 import 'package:crema/screens/menu/menu_screen.dart';
 import 'package:crema/screens/shell/shell.dart';
 import 'package:crema/screens/splash/splash.dart';
 import 'package:crema/state/store.dart';
+import 'package:crema/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -63,6 +63,25 @@ void main() {
     await tester.pumpAndSettle();
     expect(c.read(tabProvider), 1);
     expect(find.text('Your bag'), findsOneWidget);
+  });
+
+  testWidgets('a drink hides the tab bar, adds to the bag and leads to it', (tester) async {
+    final c = await pumpApp(tester, splash: false);
+    await tester.pumpAndSettle();
+    bool barHidden() => tester.widget<AnimatedSlide>(find.ancestor(of: find.byType(GlassTabBar), matching: find.byType(AnimatedSlide))).offset.dy > 0;
+    expect(barHidden(), isFalse);
+    menuNavigator.currentState!.push(CremaRoute(DrinkScreen(drink: testSeed.drink('flat-white'))));
+    await tester.pumpAndSettle();
+    expect(barHidden(), isTrue);
+    await tester.tap(find.text('Add to bag'));
+    await tester.pumpAndSettle();
+    expect(c.read(bagCountProvider), 1);
+    expect(find.text('In your bag'), findsOneWidget);
+    await tester.tap(find.text('View bag'));
+    await tester.pumpAndSettle();
+    expect(c.read(tabProvider), 1);
+    expect(find.byType(DrinkScreen), findsNothing);
+    expect(barHidden(), isFalse);
   });
 
   testWidgets('Demo settings switches to dark and resets the demo', (tester) async {

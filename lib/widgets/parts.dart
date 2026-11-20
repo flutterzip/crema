@@ -297,6 +297,11 @@ class ActionDock extends StatelessWidget {
 
   final Widget child;
 
+  /// The device's own bottom inset (the home indicator). Read from the view:
+  /// inside the shell, the Scaffold has already swapped both padding and
+  /// viewPadding for the tab bar's height, and a pushed page hides that bar.
+  static double safeBottom(BuildContext context) => MediaQueryData.fromView(View.of(context)).viewPadding.bottom;
+
   @override
   Widget build(BuildContext context) {
     final p = context.palette;

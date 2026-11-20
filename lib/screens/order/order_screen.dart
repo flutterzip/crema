@@ -17,6 +17,13 @@ class OrderScreen extends ConsumerStatefulWidget {
 
 class _OrderScreenState extends ConsumerState<OrderScreen> {
   bool collecting = false;
+  final scroll = ScrollController();
+
+  @override
+  void dispose() {
+    scroll.dispose();
+    super.dispose();
+  }
 
   Future<void> collect(Order order) async {
     setState(() => collecting = true);
@@ -44,55 +51,64 @@ class _OrderScreenState extends ConsumerState<OrderScreen> {
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: ListView(
-        padding: EdgeInsets.fromLTRB(Tokens.gutter, MediaQuery.paddingOf(context).top + 8, Tokens.gutter, 40),
+      body: Stack(
         children: [
-          Row(
+          ListView(
+            controller: scroll,
+            padding: EdgeInsets.fromLTRB(Tokens.gutter, TopChrome.extent(context) + 4, Tokens.gutter, MediaQuery.paddingOf(context).bottom + 24),
             children: [
-              RoundButton(icon: Icons.close_rounded, label: 'Close', onTap: () => Navigator.of(context).pop()),
-              const Spacer(),
-              Text('Order ${order.number}', style: text.titleMedium),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Center(
-            child: BrewScene(
-              drink: seed.drink(first.drinkId).pour(first.options),
-              stage: stage,
-              progress: progressOf(order, now),
-            ),
-          ),
-          const SizedBox(height: 20),
-          Entrance(
-            spacing: 22,
-            children: [
-              Column(
+              Center(
+                child: BrewScene(
+                  drink: seed.drink(first.drinkId).pour(first.options),
+                  stage: stage,
+                  progress: progressOf(order, now),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Entrance(
+                spacing: 22,
                 children: [
-                  AnimatedSwitcher(
-                    duration: Motion.medium,
-                    child: Text(stage.title, key: ValueKey(stage), style: text.displaySmall),
+                  Column(
+                    children: [
+                      AnimatedSwitcher(
+                        duration: Motion.medium,
+                        child: Text(stage.title, key: ValueKey(stage), style: text.displaySmall),
+                      ),
+                      const SizedBox(height: 6),
+                      Text('${wait(order, now)} · ${seed.profile.store}', style: text.bodyMedium, textAlign: TextAlign.center),
+                    ],
                   ),
-                  const SizedBox(height: 6),
-                  Text('${wait(order, now)} · ${seed.profile.store}', style: text.bodyMedium, textAlign: TextAlign.center),
+                  StageTrack(stage: stage),
+                  Column(
+                    children: [
+                      for (final l in order.lines)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: DrinkRow(drink: seed.drink(l.drinkId), options: l.options, trailing: Text('× ${l.qty}', style: text.titleMedium)),
+                        ),
+                      TotalRow(label: 'Paid', cents: order.total, strong: true),
+                    ],
+                  ),
+                  CremaButton(
+                    label: stage == Stage.ready ? 'I have it, thanks' : 'Waiting for the bar',
+                    done: collecting,
+                    onPressed: stage == Stage.ready && !order.collected ? () => collect(order) : null,
+                  ),
                 ],
-              ),
-              StageTrack(stage: stage),
-              Column(
-                children: [
-                  for (final l in order.lines)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
-                      child: DrinkRow(drink: seed.drink(l.drinkId), options: l.options, trailing: Text('× ${l.qty}', style: text.titleMedium)),
-                    ),
-                  TotalRow(label: 'Paid', cents: order.total, strong: true),
-                ],
-              ),
-              CremaButton(
-                label: stage == Stage.ready ? 'I have it, thanks' : 'Waiting for the bar',
-                done: collecting,
-                onPressed: stage == Stage.ready && !order.collected ? () => collect(order) : null,
               ),
             ],
+          ),
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: TopChrome(
+              controller: scroll,
+              title: stage.title,
+              titleAfter: 330,
+              leading: RoundButton(icon: Icons.close_rounded, label: 'Close', onTap: () => Navigator.of(context).pop()),
+              trailing: Text('Order ${order.number}', style: text.titleMedium),
+            ),
           ),
         ],
       ),

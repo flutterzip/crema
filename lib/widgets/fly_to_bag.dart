@@ -5,6 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../config/motion.dart';
+import '../config/palette.dart';
+import 'parts.dart';
+import 'tab_bar.dart';
 
 /// The bag icon in the tab bar wears this key, so a cup knows where to fly.
 final bagTarget = GlobalKey(debugLabel: 'bag');
@@ -16,6 +19,9 @@ final bagLanded = ValueNotifier<int>(0);
 /// icon, shrinking and tilting, with two fading ghosts behind it. [onLand]
 /// runs when it arrives, so the badge ticks on arrival, not on tap.
 ///
+/// It aims at the tab bar's bag unless [to] names another (the drink page
+/// hides the tab bar and wears its own bag at the top).
+///
 /// ```dart
 /// flyToBag(context, from: cupKey, child: Cup(drink: art), onLand: add);
 /// ```
@@ -24,10 +30,12 @@ Future<void> flyToBag(
   required GlobalKey from,
   required Widget child,
   required VoidCallback onLand,
+  GlobalKey? to,
 }) async {
   final overlay = Overlay.of(context, rootOverlay: true);
   final fromBox = from.currentContext?.findRenderObject() as RenderBox?;
-  final toBox = bagTarget.currentContext?.findRenderObject() as RenderBox?;
+  final toBox = (to ?? bagTarget).currentContext?.findRenderObject() as RenderBox?;
+  final top = MediaQuery.paddingOf(context).top;
   if (fromBox == null || toBox == null || Motion.reduced(context)) {
     onLand();
     bagLanded.value++;
@@ -43,8 +51,9 @@ Future<void> flyToBag(
         Widget at(double t, double alpha) {
           final e = Curves.easeInOutCubic.transform(t.clamp(0.0, 1.0));
           final a = start.center;
-          // The control point sits above both ends, so the cup arcs up first.
-          final c = Offset((a.dx + end.dx) / 2, math.min(a.dy, end.dy) - 140);
+          // The control point sits above both ends, so the cup arcs up first,
+          // but never above the screen when the bag is at the top.
+          final c = Offset((a.dx + end.dx) / 2, math.max(math.min(a.dy, end.dy) - 140, top));
           final u = 1 - e;
           final pos = a * (u * u) + c * (2 * u * e) + end * (e * e);
           final s = ui.lerpDouble(1, 0.16, Curves.easeIn.transform(e))!;
@@ -126,6 +135,37 @@ class _BagBumpState extends State<BagBump> with SingleTickerProviderStateMixin {
           child: child,
         );
       },
+    );
+  }
+}
+
+/// A frosted round bag button with the bag's count, for a page that hides
+/// the tab bar. Its icon wears [target], so a cup can fly into it.
+class BagButton extends StatelessWidget {
+  const BagButton({super.key, required this.target, required this.count, required this.onTap});
+
+  final GlobalKey target;
+  final int count;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    return Pressable(
+      onTap: onTap,
+      label: count > 0 ? 'Bag, $count' : 'Bag',
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(shape: BoxShape.circle, color: p.card.withValues(alpha: 0.8), border: Border.all(color: p.line)),
+            child: BagBump(child: KeyedSubtree(key: target, child: Icon(Icons.shopping_bag_outlined, size: 21, color: p.ink))),
+          ),
+          if (count > 0) Positioned(right: -4, top: -3, child: CountBadge(count: count)),
+        ],
+      ),
     );
   }
 }

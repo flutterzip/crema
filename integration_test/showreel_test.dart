@@ -68,11 +68,10 @@ void main() {
     final sugar = find.descendant(of: find.byType(SugarPicker), matching: find.byType(GestureDetector));
     await t.tap(sugar.at(1));
     await pause(t, 1000);
-    await tapText(t, 'Add to bag', after: 1800);
+    await tapText(t, 'Add to bag', after: 2600);
 
     if (reel == 'order') {
-      await t.tap(find.bySemanticsLabel(RegExp('^Bag')));
-      await pause(t, 1500);
+      await tapText(t, 'View bag', after: 1500);
       await tapText(t, '15 min', after: 600);
       await tapText(t, 'ASAP', after: 800);
       await t.tap(find.textContaining('Pay ').last);

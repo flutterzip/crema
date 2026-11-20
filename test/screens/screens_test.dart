@@ -38,6 +38,18 @@ void main() {
       expect(find.text('Nothing called that'), findsOneWidget);
     });
 
+    testWidgets('search and categories step aside going down and come back going up', (tester) async {
+      await pumpScreen(tester, const MenuScreen());
+      final box = find.byType(SearchBox);
+      expect(tester.getSize(find.ancestor(of: box, matching: find.byType(SizeTransition))).height, greaterThan(100));
+      await tester.drag(find.byType(ListView), const Offset(0, -500));
+      await tester.pumpAndSettle();
+      expect(tester.getSize(find.ancestor(of: box, matching: find.byType(SizeTransition))).height, 0);
+      await tester.drag(find.byType(ListView), const Offset(0, 40));
+      await tester.pumpAndSettle();
+      expect(tester.getSize(find.ancestor(of: box, matching: find.byType(SizeTransition))).height, greaterThan(100));
+    });
+
     testWidgets('tapping the middle cup opens the drink', (tester) async {
       await pumpScreen(tester, const MenuScreen());
       await tester.tap(find.bySemanticsLabel('Flat White').first);
@@ -109,6 +121,21 @@ void main() {
       final line = c.read(bagProvider).single;
       expect(line.drinkId, 'oat-latte');
       expect(line.options.temp, Temp.iced);
+      // The dock now leads to the bag; a new choice is a new cup to add.
+      expect(find.text('View bag'), findsOneWidget);
+      await tester.tap(find.text('Hot'));
+      await tester.pumpAndSettle();
+      expect(find.text('Add to bag'), findsOneWidget);
+    });
+
+    testWidgets('back stays pinned while the page scrolls under it', (tester) async {
+      await pumpScreen(tester, DrinkScreen(drink: testSeed.drink('oat-latte')));
+      final back = find.bySemanticsLabel('Back');
+      final before = tester.getTopLeft(back);
+      await tester.drag(find.byType(ListView), const Offset(0, -600));
+      await tester.pumpAndSettle();
+      expect(tester.widget<ListView>(find.byType(ListView)).controller!.offset, greaterThan(100));
+      expect(tester.getTopLeft(back), before);
     });
   });
 

@@ -15,7 +15,11 @@ class MenuScreen extends ConsumerStatefulWidget {
 
 class _MenuScreenState extends ConsumerState<MenuScreen> {
   final search = TextEditingController();
+  final scroll = ScrollController();
   Category? category;
+
+  /// Search and the categories, under the greeting: 52 + 10 + 52, then a gap.
+  static const filtersHeight = 128.0;
   String query = '';
 
   void open(Drink drink) => context.open(DrinkScreen(drink: drink));
@@ -32,77 +36,101 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
         .toList();
     final popular = [...drinks]..sort((a, b) => b.rating.compareTo(a.rating));
 
-    return ListView(
-      padding: EdgeInsets.fromLTRB(0, MediaQuery.paddingOf(context).top + 12, 0, 130),
+    return Stack(
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: Tokens.gutter),
-          child: Entrance(
-            spacing: 18,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Hi, ${seed.profile.firstName}', style: text.headlineSmall),
-                        Text('What are we brewing today?', style: text.bodyMedium),
-                      ],
+        ListView(
+          controller: scroll,
+          padding: EdgeInsets.fromLTRB(0, TopChrome.extent(context, bottomHeight: filtersHeight), 0, 130),
+          children: [
+            if (active != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(Tokens.gutter, 0, Tokens.gutter, 10),
+                child: Entrance(
+                  children: [
+                    OrderBanner(
+                      order: active,
+                      stage: stageOf(active, now),
+                      progress: progressOf(active, now),
+                      onTap: () => Navigator.of(context, rootNavigator: true).push(CremaRoute(OrderScreen(orderId: active.id))),
                     ),
-                  ),
-                  Avatar(name: seed.profile.name, image: seed.profile.avatar),
-                ],
-              ),
-              if (active != null)
-                OrderBanner(
-                  order: active,
-                  stage: stageOf(active, now),
-                  progress: progressOf(active, now),
-                  onTap: () => Navigator.of(context, rootNavigator: true).push(CremaRoute(OrderScreen(orderId: active.id))),
+                  ],
                 ),
-              SearchBox(controller: search, onChanged: (v) => setState(() => query = v)),
-              Segments<Category?>(
-                values: const [null, Category.hot, Category.iced, Category.tea],
-                value: category,
-                onChanged: (c) => setState(() => category = c),
-                label: (c) => switch (c) {
-                  null => 'All',
-                  Category.hot => 'Hot',
-                  Category.iced => 'Iced',
-                  Category.tea => 'Tea',
-                },
+              ),
+            if (drinks.isEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 40),
+                child: EmptyState(
+                  art: Cup(drink: const DrinkArt(baseColor: DrinkColors.espresso, level: 0, hot: 0), width: 110),
+                  title: 'Nothing called that',
+                  message: 'Try another name, or look through everything we pour.',
+                ),
+              )
+            else ...[
+              DrinkCarousel(drinks: drinks, onOpen: open),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(Tokens.gutter, 28, Tokens.gutter, 0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const SectionTitle('Popular today'),
+                    const SizedBox(height: 10),
+                    for (final d in popular.take(4)) ...[
+                      DrinkRow(drink: d, onTap: () => open(d)),
+                      const SizedBox(height: 12),
+                    ],
+                  ],
+                ),
               ),
             ],
-          ),
+          ],
         ),
-        const SizedBox(height: 8),
-        if (drinks.isEmpty)
-          Padding(
-            padding: const EdgeInsets.only(top: 40),
-            child: EmptyState(
-              art: Cup(drink: const DrinkArt(baseColor: DrinkColors.espresso, level: 0, hot: 0), width: 110),
-              title: 'Nothing called that',
-              message: 'Try another name, or look through everything we pour.',
-            ),
-          )
-        else ...[
-          DrinkCarousel(drinks: drinks, onOpen: open),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(Tokens.gutter, 28, Tokens.gutter, 0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+        // The greeting stays; search and the categories step aside while you
+        // read down the menu and come back the moment you scroll up.
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          child: TopChrome(
+            controller: scroll,
+            bottomHeight: filtersHeight,
+            row: Row(
               children: [
-                const SectionTitle('Popular today'),
-                const SizedBox(height: 10),
-                for (final d in popular.take(4)) ...[
-                  DrinkRow(drink: d, onTap: () => open(d)),
-                  const SizedBox(height: 12),
-                ],
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text('Hi, ${seed.profile.firstName}', maxLines: 1, overflow: TextOverflow.ellipsis, style: text.headlineSmall),
+                      Text('What are we brewing today?', maxLines: 1, overflow: TextOverflow.ellipsis, style: text.bodyMedium),
+                    ],
+                  ),
+                ),
+                Avatar(name: seed.profile.name, image: seed.profile.avatar),
               ],
             ),
+            bottom: Padding(
+              padding: const EdgeInsets.fromLTRB(Tokens.gutter, 4, Tokens.gutter, 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  SearchBox(controller: search, onChanged: (v) => setState(() => query = v)),
+                  const SizedBox(height: 10),
+                  Segments<Category?>(
+                    values: const [null, Category.hot, Category.iced, Category.tea],
+                    value: category,
+                    onChanged: (c) => setState(() => category = c),
+                    label: (c) => switch (c) {
+                      null => 'All',
+                      Category.hot => 'Hot',
+                      Category.iced => 'Iced',
+                      Category.tea => 'Tea',
+                    },
+                  ),
+                ],
+              ),
+            ),
           ),
-        ],
+        ),
       ],
     );
   }
@@ -110,6 +138,7 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
   @override
   void dispose() {
     search.dispose();
+    scroll.dispose();
     super.dispose();
   }
 }

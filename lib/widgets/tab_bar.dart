@@ -183,33 +183,7 @@ class _Tab extends StatelessWidget {
                       BagBump(child: KeyedSubtree(key: bagTarget, child: Icon(active ? item.activeIcon : item.icon, color: color, size: GlassTabBar._icon)))
                     else
                       Icon(active ? item.activeIcon : item.icon, color: color, size: GlassTabBar._icon),
-                    if (item.badge > 0)
-                      Positioned(
-                        right: -9,
-                        top: -7,
-                        child: TweenAnimationBuilder<double>(
-                          key: ValueKey(item.badge),
-                          tween: Tween(begin: 0.4, end: 1),
-                          duration: Motion.medium,
-                          curve: Motion.spring,
-                          builder: (_, s, child) => Transform.scale(scale: s, child: child),
-                          child: Container(
-                            constraints: const BoxConstraints(minWidth: 18),
-                            height: 18,
-                            padding: const EdgeInsets.symmetric(horizontal: 5),
-                            decoration: BoxDecoration(
-                              color: active ? p.onAccent : p.accent,
-                              borderRadius: BorderRadius.circular(9),
-                              border: Border.all(color: active ? p.accent : p.card, width: 1.5),
-                            ),
-                            alignment: Alignment.center,
-                            child: Text(
-                              '${item.badge}',
-                              style: TextStyle(fontFamily: 'Bricolage', fontSize: 10.5, fontWeight: FontWeight.w800, color: active ? p.accentDeep : p.onAccent),
-                            ),
-                          ),
-                        ),
-                      ),
+                    if (item.badge > 0) Positioned(right: -9, top: -7, child: CountBadge(count: item.badge, inverted: active)),
                   ],
                 ),
               ),
@@ -227,6 +201,42 @@ class _Tab extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The bag's count: a small pill that springs in each time the number
+/// changes. [inverted] for a badge sitting on the accent.
+class CountBadge extends StatelessWidget {
+  const CountBadge({super.key, required this.count, this.inverted = false});
+
+  final int count;
+  final bool inverted;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    return TweenAnimationBuilder<double>(
+      key: ValueKey(count),
+      tween: Tween(begin: 0.4, end: 1),
+      duration: Motion.medium,
+      curve: Motion.spring,
+      builder: (_, s, child) => Transform.scale(scale: s, child: child),
+      child: Container(
+        constraints: const BoxConstraints(minWidth: 18),
+        height: 18,
+        padding: const EdgeInsets.symmetric(horizontal: 5),
+        decoration: BoxDecoration(
+          color: inverted ? p.onAccent : p.accent,
+          borderRadius: BorderRadius.circular(9),
+          border: Border.all(color: inverted ? p.accent : p.card, width: 1.5),
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          '$count',
+          style: TextStyle(fontFamily: 'Bricolage', fontSize: 10.5, fontWeight: FontWeight.w800, color: inverted ? p.accentDeep : p.onAccent),
         ),
       ),
     );
